@@ -160,7 +160,7 @@ public partial class Surface : GameResource
 			return v.Value;
 		}
 
-		throw new System.Exception( "Default Surface not found!" );
+		return null;
 	}
 
 	/// <summary>

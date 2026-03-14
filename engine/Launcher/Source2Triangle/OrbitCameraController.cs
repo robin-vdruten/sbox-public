@@ -7,7 +7,7 @@ namespace Sandbox;
 ///   <item>Use the <b>scroll wheel</b> to dolly in / out.</item>
 /// </list>
 /// </summary>
-internal sealed class OrbitCameraController : Component
+public sealed class OrbitCameraController : Component
 {
 	/// <summary>Distance from the orbit pivot to the camera.</summary>
 	public float Distance { get; set; } = 300f;

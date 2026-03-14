@@ -4,7 +4,7 @@ namespace Sandbox;
 /// Smoothly rotates the attached <see cref="GameObject"/> around its up axis.
 /// Demonstrates a simple per-frame component update driven by <see cref="Time.Delta"/>.
 /// </summary>
-internal sealed class ModelRotator : Component
+public sealed class ModelRotator : Component
 {
 	/// <summary>Degrees per second to rotate.</summary>
 	public float DegreesPerSecond { get; set; } = 45f;
