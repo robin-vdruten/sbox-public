@@ -34,6 +34,8 @@
 		<!-- Game instance: provides GameInstanceDll.Create() for rendering callbacks -->
 		<ProjectReference Include="..\..\Sandbox.GameInstance\Sandbox.GameInstance.csproj" Private="false" />
 		<ProjectReference Include="..\..\Sandbox.System\Sandbox.System.csproj" />
+		<!-- Source generator: auto-implements IUpdateSubscriber / IFixedUpdateSubscriber on components that override OnUpdate / OnFixedUpdate -->
+		<ProjectReference Include="..\..\Sandbox.Generator\Sandbox.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 </Project>
