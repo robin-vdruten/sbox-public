@@ -23,6 +23,7 @@
     <Project Path="Launcher/SboxProfiler/SboxProfiler.csproj" />
     <Project Path="Launcher/SboxServer/Sbox-Server.csproj" />
     <Project Path="Launcher/SboxStandalone/Sbox-Standalone.csproj" />
+    <Project Path="Launcher/Source2Triangle/Source2Triangle.csproj" />
     <Project Path="Launcher/Shared/LaunchShared.shproj" />
     <Project Path="Launcher/StandaloneTest/Sbox-Launcher.csproj" />
   </Folder>
