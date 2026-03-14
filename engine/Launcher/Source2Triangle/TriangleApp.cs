@@ -1,6 +1,7 @@
 using Sandbox.Engine;
 using Sandbox.Engine.Settings;
 using Sandbox.Internal;
+using Sandbox.Diagnostics;
 using NativeEngine;
 using System.Runtime.InteropServices;
 using System;
@@ -97,6 +98,10 @@ internal static class TriangleApp
 			throw new Exception( "SourceEnginePreInit failed" );
 
 		Bootstrap.PreInit( _appSystem );
+
+		// Ensure all engine errors and warnings are forwarded to the system console
+		// (Bootstrap.PreInit sets PrintToConsole = false for non-headless apps by default).
+		Logging.PrintToConsole = true;
 
 		if ( !NativeEngine.EngineGlobal.SourceEngineInit( _appSystem ) )
 			throw new Exception( "SourceEngineInit failed" );

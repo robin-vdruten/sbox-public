@@ -1,3 +1,6 @@
+using Sandbox.Diagnostics;
+using System.Collections.Generic;
+
 namespace Sandbox;
 
 /// <summary>
@@ -9,8 +12,15 @@ internal static class GameScene
 	static CameraComponent Camera;
 	static GameObject PhysicsBoxObject;
 
+	// Ring buffer of recent engine log messages (errors and warnings) for on-screen display.
+	static readonly Queue<LogEvent> _recentLogs = new();
+	const int MaxLogLines = 8;
+
 	internal static void Setup()
 	{
+		// Subscribe to engine log events so we can display errors and warnings on screen.
+		Logging.OnMessage += OnEngineLog;
+
 		var scene = new Scene();
 		scene.Name = "Game Demo";
 
@@ -85,6 +95,17 @@ internal static class GameScene
 
 	// ── HUD drawn every frame via the camera overlay callback ─────────────────
 
+	static void OnEngineLog( LogEvent e )
+	{
+		// Only surface warnings and errors in the on-screen console.
+		if ( e.Level != LogLevel.Warn && e.Level != LogLevel.Error )
+			return;
+
+		_recentLogs.Enqueue( e );
+		while ( _recentLogs.Count > MaxLogLines )
+			_recentLogs.Dequeue();
+	}
+
 	static void DrawHud()
 	{
 		float fps = Time.Delta > 0f ? 1f / Time.Delta : 0f;
@@ -110,5 +131,32 @@ internal static class GameScene
 			new Color( 0.85f, 0.85f, 0.85f ),
 			fontSize: 14
 		);
+
+		// On-screen console: display recent engine warnings and errors at the bottom.
+		if ( _recentLogs.Count > 0 )
+		{
+			float screenHeight = Screen.Height;
+			float lineHeight = 16f;
+			float y = screenHeight - ( _recentLogs.Count * lineHeight ) - 10f;
+
+			foreach ( var entry in _recentLogs )
+			{
+				var color = entry.Level == LogLevel.Error
+					? new Color( 1f, 0.3f, 0.3f )
+					: new Color( 1f, 0.85f, 0.2f );
+
+				var prefix = entry.Level == LogLevel.Error ? "[ERROR]" : "[WARN]";
+				var logger = string.IsNullOrEmpty( entry.Logger ) ? string.Empty : $"[{entry.Logger}] ";
+
+				Graphics.DrawText(
+					new Rect( 10, y, Screen.Width - 20f, lineHeight ),
+					$"{prefix} {logger}{entry.Message}",
+					color,
+					fontSize: 12
+				);
+
+				y += lineHeight;
+			}
+		}
 	}
 }
