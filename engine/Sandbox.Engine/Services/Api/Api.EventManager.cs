@@ -73,8 +73,8 @@ internal static partial class Api
 
 			try
 			{
-				TaskFlushEvent = PostEventsAsync( records );
-				await TaskFlushEvent;
+				//TaskFlushEvent = PostEventsAsync( records );
+				//await TaskFlushEvent;
 			}
 			catch ( System.Exception e )
 			{

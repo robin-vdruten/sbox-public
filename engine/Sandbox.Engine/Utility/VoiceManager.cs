@@ -58,29 +58,29 @@ internal static class VoiceManager
 
 	static unsafe void ReadVoice()
 	{
-		uint dataSize = 0;
+		//uint dataSize = 0;
 
 		// Check if there's any avaliable first, the subsequent call takes 0.1ms even if you're not recording..
-		if ( steamUser.GetAvailableVoice( out var _ ) != 0 )
-		{
-			dataSize = 0;
-			compressedMemory = Memory<byte>.Empty;
-			return;
-		}
+		//if ( steamUser.GetAvailableVoice( out var _ ) != 0 )
+		//{
+		//	dataSize = 0;
+		//	compressedMemory = Memory<byte>.Empty;
+		//	return;
+		//}
 
-		fixed ( byte* inPtr = compressedBuffer )
-		{
-			if ( steamUser.GetVoice( true, (IntPtr)inPtr, (uint)compressedBuffer.Length, out dataSize ) != 0 )
-			{
-				dataSize = 0;
-				compressedMemory = Memory<byte>.Empty;
-				return;
-			}
+		//fixed ( byte* inPtr = compressedBuffer )
+		//{
+		//	if ( steamUser.GetVoice( true, (IntPtr)inPtr, (uint)compressedBuffer.Length, out dataSize ) != 0 )
+		//	{
+		//		dataSize = 0;
+		//		compressedMemory = Memory<byte>.Empty;
+		//		return;
+		//	}
 
-			timeSinceLastHear = 0;
-			compressedMemory = new Memory<byte>( compressedBuffer, 0, (int)dataSize );
-			OnCompressedVoiceData?.Invoke( compressedMemory );
-		}
+		//	timeSinceLastHear = 0;
+		//	compressedMemory = new Memory<byte>( compressedBuffer, 0, (int)dataSize );
+		//	OnCompressedVoiceData?.Invoke( compressedMemory );
+		//}
 	}
 
 	/// <summary>

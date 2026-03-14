@@ -33,6 +33,7 @@
 		<ProjectReference Include="..\..\Sandbox.Engine\Sandbox.Engine.csproj" Private="false" />
 		<!-- Game instance: provides GameInstanceDll.Create() for rendering callbacks -->
 		<ProjectReference Include="..\..\Sandbox.GameInstance\Sandbox.GameInstance.csproj" Private="false" />
+		<ProjectReference Include="..\..\Sandbox.System\Sandbox.System.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -16,7 +16,7 @@ internal sealed class SteamRichPresenceSystem : IRichPresenceSystem
 		if ( _values.TryGetValue( key, out var oldValue ) && oldValue == value )
 			return;
 
-		Steam.SteamFriends().SetRichPresence( key, value );
+		//Steam.SteamFriends().SetRichPresence( key, value );
 
 		_values[key] = value;
 	}

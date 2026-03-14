@@ -34,39 +34,39 @@ internal static unsafe partial class VRSystem
 
 	public static void Init()
 	{
-		//
-		// If we've already inited, don't do it again
-		//
-		if ( IsActive )
-			return;
+		////
+		//// If we've already inited, don't do it again
+		////
+		//if ( IsActive )
+		//	return;
 
-		//
-		// Check if we actually want to init VR
-		//
-		if ( CommandLine.HasSwitch( "-novr" ) )
-			return;
+		////
+		//// Check if we actually want to init VR
+		////
+		//if ( CommandLine.HasSwitch( "-novr" ) )
+		//	return;
 
-		if ( Application.IsHeadless )
-			return;
+		//if ( Application.IsHeadless )
+		//	return;
 
-		if ( Application.IsStandalone && !Standalone.Manifest.IsVRProject )
-			return;
+		//if ( Application.IsStandalone && !Standalone.Manifest.IsVRProject )
+		//	return;
 
-		//
-		// Check if we have a headset...
-		//
-		HasHeadset = Instance.HasHeadset();
+		////
+		//// Check if we have a headset...
+		////
+		//HasHeadset = Instance.HasHeadset();
 
-		if ( !HasHeadset )
-			return;
+		//if ( !HasHeadset )
+		//	return;
 
-		// All good, init
-		{
-			State = States.Active;
+		//// All good, init
+		//{
+		//	State = States.Active;
 
-			CreateInstance();
-			Reset();
-		}
+		//	CreateInstance();
+		//	Reset();
+		//}
 	}
 
 	[ConCmd( "vr_info", ConVarFlags.Protected )]

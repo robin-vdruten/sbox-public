@@ -45,7 +45,7 @@ public static partial class Graphics
 
 	static void RenderUiOverlay()
 	{
-		using var _ = GlobalContext.MenuScope();
-		GlobalContext.Current.UISystem.Render();
+		//using var _ = GlobalContext.MenuScope();
+		//GlobalContext.Current.UISystem.Render();
 	}
 }
