@@ -55,7 +55,10 @@ internal static class TriangleScene
 			new Vertex(new Vector3(s2.x, s2.y, 0), new Color32(50,100,255)),
 		];
 
-		Graphics.Draw( verts, 3, Material.UI.Basic );
+		// Use the custom triangle demo shader; fall back to the basic UI shader if it
+		// hasn't been compiled yet (e.g. on a fresh checkout before shader compilation).
+		var mat = Material.FromShader( "shaders/triangle_demo.shader" ) ?? Material.UI.Basic;
+		Graphics.Draw( verts, 3, mat );
 
 		float fps = 1f / Time.Delta;
 
