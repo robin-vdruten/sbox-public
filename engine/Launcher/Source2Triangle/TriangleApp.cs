@@ -1,4 +1,5 @@
 using Sandbox.Engine;
+using Sandbox.Engine.Settings;
 using Sandbox.Internal;
 using NativeEngine;
 using System.Runtime.InteropServices;
@@ -66,7 +67,10 @@ internal static class TriangleApp
 		NetCore.InitializeInterop( LauncherEnvironment.GamePath );
 
 		// Fix command-line when run as a managed .dll host (.dll → .exe).
+		// Append -novid so the native engine skips its intro/splash video.
 		var commandLine = Environment.CommandLine.Replace( ".dll", ".exe" );
+		if ( !commandLine.Contains( "-novid" ) )
+			commandLine += " -novid";
 
 		// Mark this process as a standalone game so Bootstrap skips
 		// editor/tools paths and the Steam-inventory wait.
@@ -82,7 +86,7 @@ internal static class TriangleApp
 		{
 			iFlags = MaterialSystem2AppSystemDictFlags.IsGameApp
 			       | MaterialSystem2AppSystemDictFlags.IsStandaloneGame,
-			pWindowTitle = Marshal.StringToHGlobalAnsi( "Source 2 Triangle Demo" ),
+			pWindowTitle = Marshal.StringToHGlobalAnsi( "Source 2 Game Demo" ),
 		};
 
 		_appSystem = CMaterialSystem2AppSystemDict.Create( createInfo );
@@ -99,8 +103,14 @@ internal static class TriangleApp
 
 		Bootstrap.Init();
 
-		// The engine is fully up – create the scene that renders our triangle.
-		TriangleScene.Setup();
+		// Switch to windowed mode – not fullscreen, not borderless.
+		var video = RenderSettings.Instance;
+		video.Fullscreen = false;
+		video.Borderless = false;
+		video.Apply();
+
+		// The engine is fully up – create the scene that renders our model demo.
+		GameScene.Setup();
 	}
 
 	// -------------------------------------------------------------------------
