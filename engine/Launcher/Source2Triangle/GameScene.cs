@@ -10,6 +10,7 @@ namespace Sandbox;
 internal static class GameScene
 {
 	static CameraComponent Camera;
+	static DebugViewController DebugView;
 	static GameObject PhysicsBoxObject;
 
 	// Ring buffer of recent engine log messages (errors and warnings) for on-screen display.
@@ -39,6 +40,8 @@ internal static class GameScene
 		cameraGo.WorldRotation = Rotation.LookAt( Vector3.Zero - cameraGo.WorldPosition );
 		// Orbit camera: hold RMB and drag to rotate, scroll to zoom
 		cameraGo.AddComponent<OrbitCameraController>();
+		// Debug view controller: F1/F2/F3 toggle render modes, physics and hitbox overlays
+		DebugView = cameraGo.AddComponent<DebugViewController>();
 
 		// ── Lighting ─────────────────────────────────────────────────────────
 		var ambGo = scene.CreateObject( true );
@@ -131,6 +134,9 @@ internal static class GameScene
 			new Color( 0.85f, 0.85f, 0.85f ),
 			fontSize: 14
 		);
+
+		// Debug overlays: current render mode and toggle states
+		DebugView?.DrawHud();
 
 		// On-screen console: display recent engine warnings and errors at the bottom.
 		if ( _recentLogs.Count > 0 )
