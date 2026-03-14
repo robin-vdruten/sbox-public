@@ -99,6 +99,9 @@ internal static class TriangleApp
 
 		Bootstrap.PreInit( _appSystem );
 
+		// Initialise Steam so that input actions and the Steam overlay work correctly.
+		Standalone.Init();
+
 		// Ensure all engine errors and warnings are forwarded to the system console
 		// (Bootstrap.PreInit sets PrintToConsole = false for non-headless apps by default).
 		Logging.PrintToConsole = true;

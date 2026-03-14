@@ -252,7 +252,9 @@ internal class UISystem
 		//
 		Mouse.Frame();
 
-		bool inGame = IGameInstance.Current is not null;
+		// Consider a standalone scene with an active play state as "in game" even when
+		// no IGameInstance (loaded game package) exists, e.g. the Source2Triangle demo.
+		bool inGame = IGameInstance.Current is not null || Game.IsPlaying;
 
 		var mouseState = Sandbox.Engine.InputContext.InputState.Ignore;
 		var buttonState = Sandbox.Engine.InputContext.InputState.Ignore;
