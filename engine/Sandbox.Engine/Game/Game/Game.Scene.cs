@@ -68,7 +68,7 @@ public static partial class Game
 			return;
 		}
 
-		ActiveScene.Camera.SceneCamera.EnableEngineOverlays = true;
+		ActiveScene.Camera.SceneCamera.EnableEngineOverlays = !Application.IsStandalone;
 		SceneCamera.RecordingCamera = ActiveScene.Camera.SceneCamera;
 
 		ActiveScene.Render( swapChain, default );
