@@ -24,7 +24,9 @@ internal partial class GameInstanceDll : Engine.IGameInstanceDll
 
 	public void Bootstrap()
 	{
+		// set both the concrete GameInstanceDll.Current and the interface static Current
 		Current = this;
+		Engine.IGameInstanceDll.Current = this;
 
 		GlobalContext.Current.Reset();
 		GlobalContext.Current.LocalAssembly = GetType().Assembly;
@@ -861,7 +863,14 @@ internal partial class GameInstanceDll : Engine.IGameInstanceDll
 
 	public static void Create()
 	{
-		IGameInstanceDll.Current = new GameInstanceDll();
+       // Create instance and set both the concrete and interface static slots so
+		// callers reading either one (depending on how the type was referenced)
+		// will see the instance. This ensures projects like Source2Triangle that
+		// call Create() early get a populated Current.
+		 var __gamedll_inst = new GameInstanceDll();
+		Current = __gamedll_inst;
+		Engine.IGameInstanceDll.Current = __gamedll_inst;
+
 
 		// PreJIT the methods in these dlls to avoid doing it during the game
 		{

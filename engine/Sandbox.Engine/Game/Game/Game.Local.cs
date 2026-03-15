@@ -27,6 +27,16 @@ public static partial class Game
 		TypeLibrary.AddAssembly( typeof( EngineLoop ).Assembly, false );
 		TypeLibrary.AddAssembly( typeof( Facepunch.ActionGraphs.ActionGraph ).Assembly, false );
 
+		var entryAssembly = Assembly.GetEntryAssembly();
+		if ( entryAssembly is not null
+			&& entryAssembly != typeof( Vector3 ).Assembly
+			&& entryAssembly != Game.GameAssembly
+			&& entryAssembly != typeof( EngineLoop ).Assembly
+			&& entryAssembly != typeof( Facepunch.ActionGraphs.ActionGraph ).Assembly )
+		{
+			TypeLibrary.AddAssembly( entryAssembly, true );
+		}
+
 		if ( NodeLibrary is null )
 		{
 			NodeLibrary = new Facepunch.ActionGraphs.NodeLibrary( new TypeLoader( () => TypeLibrary ), new GraphLoader() );

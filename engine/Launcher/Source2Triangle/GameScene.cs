@@ -1,4 +1,5 @@
 using Sandbox.Diagnostics;
+using System;
 using System.Collections.Generic;
 
 namespace Sandbox;
@@ -11,10 +12,25 @@ internal static class GameScene
 {
 	static CameraComponent Camera;
 	static GameObject PhysicsBoxObject;
+	static GameObject PhysicsBoxObject1;
+
+	static SkinnedModelRenderer CitizenRenderer;
+	static IReadOnlyList<string> CitizenSequences;
+	static int CurrentSequenceIndex = 0;
 
 	// Ring buffer of recent engine log messages (errors and warnings) for on-screen display.
 	static readonly Queue<LogEvent> _recentLogs = new();
 	const int MaxLogLines = 8;
+
+	static readonly (SceneCameraDebugMode Mode, bool Wireframe, string Label)[] RenderModes =
+	[
+		( SceneCameraDebugMode.Normal,     false, "Lit"            ),
+		( SceneCameraDebugMode.FullBright,  false, "Full Bright"    ),
+		( SceneCameraDebugMode.Albedo,      false, "Albedo"         ),
+		( SceneCameraDebugMode.NormalMap,   false, "World Normals"  ),
+		( SceneCameraDebugMode.Roughness,   false, "Roughness"      ),
+		( SceneCameraDebugMode.Normal,      true,  "Wireframe"      ),
+	];
 
 	internal static void Setup()
 	{
@@ -26,6 +42,8 @@ internal static class GameScene
 
 		Game.ActiveScene = scene;
 		Game.IsPlaying = true;
+		
+		Console.WriteLine($"game {Game.InGame}");
 
 		using var _ = scene.Push();
 
@@ -72,9 +90,57 @@ internal static class GameScene
 		modelGo.Name = "Scene Model";
 		modelGo.WorldPosition = new Vector3( 0f, 0f, 40f );
 		var renderer = modelGo.AddComponent<ModelRenderer>();
-		renderer.Model = Model.Load( "models/dev/box.vmdl" );
+		renderer.Model = Model.Load( "models/editor/playerstart.vmdl" );
 		// Slow auto-rotation so the model is clearly visible
 		modelGo.AddComponent<ModelRotator>();
+
+		// ── Animated skinned model (citizen) ─────────────────────────────────
+		// SkinnedModelRenderer drives bone animations.  The model's built-in
+		// animation graph plays automatically; swap UseAnimGraph = false and set
+		// Sequence.Name to play a specific clip by name instead.
+		//
+		// Equivalent in a .razor PanelComponent or in scene setup code:
+		//   var smr = citizenGo.AddComponent<SkinnedModelRenderer>();
+		//   smr.Model = Model.Load("models/citizen_human/citizen_human_male.vmdl");
+		//   smr.UseAnimGraph = true;   // let the built-in animgraph run
+		//   // – or –
+		//   smr.UseAnimGraph = false;
+		//   smr.Sequence.Name = "idle";  // play a named sequence directly
+		var citizenGo = scene.CreateObject( true );
+		citizenGo.Name = "Animated Citizen";
+		citizenGo.WorldPosition = new Vector3( -120f, 0f, 0f );
+		citizenGo.WorldRotation = new Angles( 0f, 90f, 0f );
+		var smr = citizenGo.AddComponent<SkinnedModelRenderer>();
+		smr.Model = Model.Load( "models/citizen_human/citizen_human_male.vmdl" );
+		// The citizen model ships with an animation graph; enable it so the idle
+		// animation plays automatically via the built-in animgraph.
+		smr.UseAnimGraph = false;
+
+		smr.Sequence.Name = "Falling"; // This will be ignored since UseAnimGraph is true, but shows how to set a specific sequence if not using the animgraph.
+
+		CitizenRenderer = smr;
+
+		CitizenSequences = smr.Sequence.SequenceNames as IReadOnlyList<string>;
+
+		if ( CitizenSequences != null && CitizenSequences.Count > 0 )
+		{
+			CurrentSequenceIndex = 0;
+			CitizenRenderer.Sequence.Name = CitizenSequences[CurrentSequenceIndex];
+		}
+
+		if ( smr.Sequence.SequenceNames is IReadOnlyList<string> seqNames )
+		{
+			for ( int i = 0; i < seqNames.Count; i++ )
+			{
+				Console.WriteLine( $"Sequence[{i}] = {seqNames[i]}" );
+			}
+		}
+		else if ( smr.Sequence.SequenceNames != null )
+		{
+			int i = 0;
+			foreach ( var name in smr.Sequence.SequenceNames )
+				Console.WriteLine( $"Sequence[{i++}] = {name}" );
+		}
 
 		// ── Physics box (dynamic – falls and bounces on the floor) ────────────
 		PhysicsBoxObject = scene.CreateObject( true );
@@ -86,11 +152,49 @@ internal static class GameScene
 		var physCol = PhysicsBoxObject.AddComponent<BoxCollider>();
 		physCol.Scale = new Vector3( 50f, 50f, 50f );
 		PhysicsBoxObject.AddComponent<Rigidbody>();
+		//physCol.Surface = new();
+		//var surface = physCol.Surface.GetBaseSurface();
+		
 		// Reset spawner component handles the "R" key
 		PhysicsBoxObject.AddComponent<PhysicsBoxReset>();
 
+
+		PhysicsBoxObject1 = scene.CreateObject( true );
+		PhysicsBoxObject1.Name = "Physics Box1";
+		PhysicsBoxObject1.WorldPosition = new Vector3( 80, 0f, 400);
+		var physRenderer1 = PhysicsBoxObject1.AddComponent<ModelRenderer>();
+		physRenderer1.Model = Model.Load( "models/dev/box.vmdl" );
+		physRenderer1.Tint = new Color( 1f, 0.4f, 0.3f );
+		var physCol1 = PhysicsBoxObject1.AddComponent<BoxCollider>();
+		physCol1.Scale = new Vector3( 50f, 50f, 50f );
+		PhysicsBoxObject1.AddComponent<Rigidbody>();
+		//physCol.Surface = new();
+		//var surface = physCol.Surface.GetBaseSurface();
+
+		// Reset spawner component handles the "R" key
+		PhysicsBoxObject1.AddComponent<PhysicsBoxReset>();
+		var comp = PhysicsBoxObject1.GetComponent<PhysicsBoxReset>();
+		comp.SpawnPosition = new Vector3( 80, 0f, 400 );
+
 		// ── HUD overlay ───────────────────────────────────────────────────────
+		//var (mode, wire, _) = RenderModes[0];
+		//Camera.DebugMode = mode;
+		//Camera.SceneCamera.WireframeMode = wire;
 		Camera.SceneCamera.OnRenderOverlay = DrawHud;
+
+		//var uiGo = scene.CreateObject( true );
+		//uiGo.Name = "HUD";
+		//uiGo.AddComponent<ScreenPanel>();
+		//var hud = uiGo.AddComponent<GameHudComponent>();
+
+		//// Pass shared state to the HUD so it can populate the entity list and
+		//// show log messages without needing a static reference to GameScene.
+		//hud.TrackedEntities =
+		//[
+		//	("Physics Box",       PhysicsBoxObject),
+		//	("Physics Box 2",       PhysicsBoxObject1),
+		//];
+		//hud.RecentLogs = _recentLogs;
 	}
 
 	// ── HUD drawn every frame via the camera overlay callback ─────────────────
@@ -106,8 +210,28 @@ internal static class GameScene
 			_recentLogs.Dequeue();
 	}
 
+	static void NextAnimation()
+	{
+		if ( CitizenSequences == null || CitizenSequences.Count == 0 )
+			return;
+
+		CurrentSequenceIndex++;
+
+		if ( CurrentSequenceIndex >= CitizenSequences.Count )
+			CurrentSequenceIndex = 0;
+
+		var name = CitizenSequences[CurrentSequenceIndex];
+
+		CitizenRenderer.Sequence.Name = name;
+	}
+
 	static void DrawHud()
 	{
+		if ( Input.Pressed( "jump" ) ) // SPACE
+		{
+			NextAnimation();
+		}
+
 		float fps = Time.Delta > 0f ? 1f / Time.Delta : 0f;
 
 		// FPS counter – top-left corner
@@ -127,10 +251,20 @@ internal static class GameScene
 		);
 		Graphics.DrawText(
 			new Rect( 10, 62, 500, 20 ),
-			"Press  R  to drop a new physics box  |  Esc  to quit",
+			"Press  R  to drop a new physics box",
 			new Color( 0.85f, 0.85f, 0.85f ),
 			fontSize: 14
 		);
+
+		if ( CitizenSequences != null )
+		{
+			Graphics.DrawText(
+				new Rect( 10, 90, 500, 20 ),
+				$"Animation: {CitizenSequences[CurrentSequenceIndex]}",
+				Color.Cyan,
+				fontSize: 16
+			);
+		}
 
 		// On-screen console: display recent engine warnings and errors at the bottom.
 		if ( _recentLogs.Count > 0 )

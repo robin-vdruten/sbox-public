@@ -252,7 +252,7 @@ internal class UISystem
 		//
 		Mouse.Frame();
 
-		bool inGame = IGameInstance.Current is not null;
+		bool inGame = IGameInstance.Current is not null || Game.IsPlaying;
 
 		var mouseState = Sandbox.Engine.InputContext.InputState.Ignore;
 		var buttonState = Sandbox.Engine.InputContext.InputState.Ignore;

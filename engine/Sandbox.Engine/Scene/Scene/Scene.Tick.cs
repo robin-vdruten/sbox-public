@@ -98,7 +98,13 @@ public partial class Scene : GameObject
 
 		Signal( GameObjectSystem.Stage.Interpolation );
 
-		foreach ( var c in updateComponents.EnumerateLocked( true ) ) c.InternalUpdate();
+		foreach ( var c in updateComponents.EnumerateLocked( true ) )
+		{
+			if ( !c.IsValid() )
+				continue;
+			c.InternalUpdate();
+
+		}
 	}
 
 	internal void PreRender()

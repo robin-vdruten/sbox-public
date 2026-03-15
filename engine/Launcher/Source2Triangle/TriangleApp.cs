@@ -60,8 +60,15 @@ internal static class TriangleApp
 	// Initialisation
 	// -------------------------------------------------------------------------
 
+	[DllImport( "kernel32.dll", SetLastError = true )]
+	static extern bool AllocConsole();
+
+	[DllImport( "kernel32.dll", SetLastError = true )]
+	static extern bool FreeConsole();
+
 	static void Init()
 	{
+		AllocConsole();
 		Application.TryLoadVersionInfo( LauncherEnvironment.GamePath );
 
 		// Load the interop bridge between C# and the native engine DLLs.
@@ -70,8 +77,8 @@ internal static class TriangleApp
 		// Fix command-line when run as a managed .dll host (.dll → .exe).
 		// Append -novid so the native engine skips its intro/splash video.
 		var commandLine = Environment.CommandLine.Replace( ".dll", ".exe" );
-		if ( !commandLine.Contains( "-novid" ) )
-			commandLine += " -novid";
+		if ( !commandLine.Contains( "-nosplash" ) )
+			commandLine += " -nosplash";
 
 		// Mark this process as a standalone game so Bootstrap skips
 		// editor/tools paths and the Steam-inventory wait.
@@ -97,7 +104,15 @@ internal static class TriangleApp
 		if ( !NativeEngine.EngineGlobal.SourceEnginePreInit( commandLine, _appSystem ) )
 			throw new Exception( "SourceEnginePreInit failed" );
 
+		unsafe
+		{
+			IntPtr addr = (IntPtr)NativeEngine.EngineGlobal.__N.global_SourceEnginePreInit;
+			Console.WriteLine( $"SourceEnginePreInit address: 0x{addr.ToString( "X" )}" );
+		}
+
 		Bootstrap.PreInit( _appSystem );
+
+		Standalone.Init();
 
 		// Ensure all engine errors and warnings are forwarded to the system console
 		// (Bootstrap.PreInit sets PrintToConsole = false for non-headless apps by default).
@@ -112,10 +127,13 @@ internal static class TriangleApp
 		var video = RenderSettings.Instance;
 		video.Fullscreen = false;
 		video.Borderless = false;
+		video.ResolutionHeight = 780;
+		video.ResolutionWidth = 1280;
 		video.Apply();
 
 		// The engine is fully up – create the scene that renders our model demo.
 		GameScene.Setup();
+		//TriangleScene.Setup();
 	}
 
 	// -------------------------------------------------------------------------

@@ -28,7 +28,7 @@ internal static class VoiceManager
 		if ( !IsValid ) return false;
 
 		IsListening = true;
-		steamUser.StartVoiceRecording();
+		//steamUser.StartVoiceRecording();
 		return true;
 	}
 
@@ -37,7 +37,7 @@ internal static class VoiceManager
 		if ( !IsValid ) return false;
 
 		IsListening = false;
-		steamUser.StopVoiceRecording();
+		//steamUser.StopVoiceRecording();
 		return true;
 	}
 

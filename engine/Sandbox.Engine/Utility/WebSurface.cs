@@ -263,6 +263,8 @@ public sealed class WebSurface : IDisposable
 	/// <param name="r"></param>
 	private unsafe void OnStartRequest( HTML_StartRequest_t r )
 	{
+		  if ( !steamHTMLSurface.IsValid )
+            return;
 		var url = r.PchURL;
 
 		try
@@ -363,6 +365,8 @@ public sealed class WebSurface : IDisposable
 	/// </summary>
 	public void TellMouseMove( Vector2 position )
 	{
+		if ( !steamHTMLSurface.IsValid )
+            return;
 		steamHTMLSurface.MouseMove( BrowserId, (int)position.x, (int)position.y );
 	}
 
@@ -372,6 +376,8 @@ public sealed class WebSurface : IDisposable
 	/// <param name="delta"></param>
 	public void TellMouseWheel( int delta )
 	{
+		  if ( !steamHTMLSurface.IsValid )
+            return;
 		steamHTMLSurface.MouseWheel( BrowserId, delta );
 	}
 
@@ -380,6 +386,8 @@ public sealed class WebSurface : IDisposable
 	/// </summary>
 	public void TellMouseButton( MouseButtons button, bool state )
 	{
+		  if ( !steamHTMLSurface.IsValid )
+            return;
 		if ( (button & MouseButtons.Left) != 0 )
 		{
 			if ( state ) steamHTMLSurface.MouseDown( BrowserId, 0 );
@@ -404,6 +412,8 @@ public sealed class WebSurface : IDisposable
 	/// </summary>
 	public void TellChar( uint unicodeKey, KeyboardModifiers modifiers )
 	{
+		  if ( !steamHTMLSurface.IsValid )
+            return;
 		// don't allow paste
 		if ( IsLimited && modifiers.Contains( KeyboardModifiers.Ctrl ) )
 		{
@@ -420,6 +430,8 @@ public sealed class WebSurface : IDisposable
 	/// </summary>
 	public void TellKey( uint virtualKeyCode, KeyboardModifiers modifiers, bool state )
 	{
+		  if ( !steamHTMLSurface.IsValid )
+            return;
 		//
 		// Don't allow paste. Since the potential is there to open a webpage and simulate
 		// key presses to past the contents of the clipboard into a hidden textarea and 

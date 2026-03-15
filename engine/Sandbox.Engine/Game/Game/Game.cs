@@ -47,7 +47,7 @@ public static partial class Game
 	/// <summary>
 	/// Return true if we're in a game (ie, not in the main menu)
 	/// </summary>
-	public static bool InGame => IGameInstance.Current is not null;
+	public static bool InGame => IGameInstanceDll.Current is not null;
 
 	/// <summary>
 	/// Returns true if the game is running with the editor enabled

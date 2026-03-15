@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<Import Project="..\Shared\LaunchShared.projitems" Label="Shared" />
 
@@ -34,6 +34,8 @@
 		<!-- Game instance: provides GameInstanceDll.Create() for rendering callbacks -->
 		<ProjectReference Include="..\..\Sandbox.GameInstance\Sandbox.GameInstance.csproj" Private="false" />
 		<ProjectReference Include="..\..\Sandbox.System\Sandbox.System.csproj" />
-	</ItemGroup>
 
+		<ProjectReference Include="..\..\Sandbox.Generator\Sandbox.Generator.csproj"/>
+	</ItemGroup>
+	
 </Project>

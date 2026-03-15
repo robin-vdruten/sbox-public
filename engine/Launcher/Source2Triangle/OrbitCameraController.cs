@@ -7,7 +7,7 @@ namespace Sandbox;
 ///   <item>Use the <b>scroll wheel</b> to dolly in / out.</item>
 /// </list>
 /// </summary>
-internal sealed class OrbitCameraController : Component
+public sealed class OrbitCameraController : Component, Sandbox.Internal.IUpdateSubscriber
 {
 	/// <summary>Distance from the orbit pivot to the camera.</summary>
 	public float Distance { get; set; } = 300f;
@@ -55,7 +55,6 @@ internal sealed class OrbitCameraController : Component
 			_yaw += Input.MouseDelta.x * YawSensitivity;
 			_pitch = System.Math.Clamp( _pitch + Input.MouseDelta.y * PitchSensitivity, MinPitch, MaxPitch );
 		}
-
 		// Scroll wheel zooms (dolly in/out).
 		Distance -= Input.MouseWheel.y * ZoomSpeed;
 		Distance = System.Math.Max( 50f, Distance );
