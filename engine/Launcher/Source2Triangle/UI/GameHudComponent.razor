@@ -1,0 +1,249 @@
+@* GameHudComponent.razor
+ *
+ * Full-screen HUD and entity inspector, implemented as a sbox PanelComponent.
+ *
+ * This file shows the recommended way to build UI in sbox:
+ *   - @inherits PanelComponent  → attached to a scene GameObject
+ *   - Declarative HTML template with @foreach, @if, and two-way bindings
+ *   - @code block for event handlers and lifecycle overrides
+ *   - Child Razor panels (AxisSlider) referenced directly by tag name
+ *   - Animation controls that demonstrate SkinnedModelRenderer sequences
+ *
+ * GameScene.cs sets TrackedEntities and RecentLogs before the first update.
+ *@
+
+@using Sandbox
+@using Sandbox.UI
+@using Sandbox.Diagnostics
+@using System.Collections.Generic
+@inherits PanelComponent
+@namespace Sandbox
+
+<root class="game-hud">
+
+	@* ── Top-left: FPS counter + control hints ──────────────────────────────── *@
+	<div class="hud-left">
+		<label class="fps">FPS: @Fps</label>
+		<label class="hint">Hold  RMB + drag  to orbit   ·   Scroll wheel to zoom</label>
+		<label class="hint">Press  R  to drop a physics box   ·   Esc  to quit</label>
+		<label class="hint">Animated citizen: SkinnedModelRenderer + UseAnimGraph = true</label>
+	</div>
+
+	@* ── Bottom-left: engine log console (warnings + errors) ────────────────── *@
+	<div class="log-console">
+		@foreach ( var entry in SafeLogs )
+		{
+			bool isErr = entry.Level == LogLevel.Error;
+			<label class="@( isErr ? "log-error" : "log-warn" )">
+				@( isErr ? "[ERR]" : "[WRN]" ) @entry.Message
+			</label>
+		}
+	</div>
+
+	@* ── Right: entity inspector panel ──────────────────────────────────────── *@
+	<div class="inspector">
+		<label class="inspector-title">Entity Inspector</label>
+
+		@* Entity selection buttons *@
+		@foreach ( var (name, go) in SafeEntities )
+		{
+			<div class="entity-btn @( Selected == go ? "active" : "" )"
+			     @onclick="@( () => SelectEntity( go ) )">
+				<label>@name</label>
+			</div>
+		}
+
+		@* Detail section – only shown once an entity is selected *@
+		@if ( Selected.IsValid() )
+		{
+			<label class="selected-name">@Selected.Name</label>
+			<div class="divider"></div>
+
+			@* ── Position sliders ─────────────────────────────────────────────── *@
+			<label class="section-heading">Position</label>
+
+			@*
+			 * Each AxisSlider is a child Razor panel (UI/AxisSlider.razor).
+			 * Parameters are passed as HTML attributes; OnValueChanged fires
+			 * whenever the user drags the slider to a new value.
+			 *@
+			<AxisSlider Label="X"
+			            LabelColor="@(new Color( 1f, 0.35f, 0.35f ))"
+			            Min="-500" Max="500"
+			            Value="@Selected.WorldPosition.x"
+			            OnValueChanged="@(v => MoveSelected( x: v ))" />
+
+			<AxisSlider Label="Y"
+			            LabelColor="@(new Color( 0.35f, 1f, 0.35f ))"
+			            Min="-500" Max="500"
+			            Value="@Selected.WorldPosition.y"
+			            OnValueChanged="@(v => MoveSelected( y: v ))" />
+
+			<AxisSlider Label="Z"
+			            LabelColor="@(new Color( 0.35f, 0.55f, 1f ))"
+			            Min="0" Max="500"
+			            Value="@Selected.WorldPosition.z"
+			            OnValueChanged="@(v => MoveSelected( z: v ))" />
+
+			@* ── Animation controls (only when selected entity has a SkinnedModelRenderer) *@
+			@if ( _smr.IsValid() )
+			{
+				<div class="divider anim-divider"></div>
+				<label class="section-heading">Animation</label>
+
+				@*
+				 * Animation sequences: how animations work in Source 2 / sbox
+				 * ─────────────────────────────────────────────────────────────
+				 * A SkinnedModelRenderer drives bone animations in two modes:
+				 *
+				 * 1. UseAnimGraph = true  (default)
+				 *    The model's compiled animation graph runs automatically.
+				 *    The graph blends between clips based on parameters (speed,
+				 *    aim angle, etc.) that you push via SetAnimParameter().
+				 *
+				 * 2. UseAnimGraph = false
+				 *    You control playback directly with Sequence.Name.
+				 *    Set Sequence.Name to a clip name (e.g. "idle", "walk",
+				 *    "run") and the model plays that clip on a loop.
+				 *
+				 * The buttons below demonstrate mode 2: each click disables the
+				 * animgraph and plays the named sequence.  The "AnimGraph" toggle
+				 * re-enables mode 1 so the built-in graph takes over again.
+				 *@
+
+				<div class="anim-controls">
+					<button class="anim-btn @( _animSeq == "idle" ? "active" : "" )"
+					        @onclick="@( () => PlaySequence( "idle" ) )">Idle</button>
+					<button class="anim-btn @( _animSeq == "walk" ? "active" : "" )"
+					        @onclick="@( () => PlaySequence( "walk" ) )">Walk</button>
+					<button class="anim-btn @( _animSeq == "run"  ? "active" : "" )"
+					        @onclick="@( () => PlaySequence( "run" ) )">Run</button>
+				</div>
+
+				<div class="anim-controls anim-controls-secondary">
+					<button class="anim-btn @( _smr.UseAnimGraph ? "active" : "" )"
+					        @onclick="@ToggleAnimGraph">AnimGraph</button>
+				</div>
+
+				<label class="hint-small">
+					@( _smr.UseAnimGraph ? "AnimGraph: on (built-in blend tree)" : $"Sequence: {_animSeq}" )
+				</label>
+			}
+		}
+	</div>
+
+</root>
+
+@code {
+	// ── Data injected by GameScene ───────────────────────────────────────────
+
+	/// <summary>List of named scene objects to show in the inspector.</summary>
+	public IReadOnlyList<(string Name, GameObject Object)> TrackedEntities { get; set; }
+
+	/// <summary>Ring buffer of recent engine log events (warnings + errors).</summary>
+	public Queue<LogEvent> RecentLogs { get; set; }
+
+	// ── Runtime state ─────────────────────────────────────────────────────────
+
+	/// <summary>Currently selected GameObject in the inspector.</summary>
+	GameObject Selected;
+
+	/// <summary>
+	/// SkinnedModelRenderer on <see cref="Selected"/>, or null if the selected
+	/// entity does not have one.  Drives the animation controls.
+	/// </summary>
+	SkinnedModelRenderer _smr;
+
+	/// <summary>Name of the sequence currently chosen in the UI.</summary>
+	string _animSeq = "idle";
+
+	// ── Computed helpers ─────────────────────────────────────────────────────
+
+	/// <summary>Current frames per second derived from <see cref="Time.Delta"/>.</summary>
+	float Fps => Time.Delta > 0f ? 1f / Time.Delta : 0f;
+
+	/// <summary>Null-safe iteration over <see cref="TrackedEntities"/>.</summary>
+	IReadOnlyList<(string Name, GameObject Object)> SafeEntities =>
+		TrackedEntities ?? System.Array.Empty<(string Name, GameObject Object)>();
+
+	/// <summary>Null-safe iteration over <see cref="RecentLogs"/>.</summary>
+	IEnumerable<LogEvent> SafeLogs =>
+		RecentLogs ?? System.Linq.Enumerable.Empty<LogEvent>();
+
+	// ── Entity selection ─────────────────────────────────────────────────────
+
+	/// <summary>Select an entity and discover its SkinnedModelRenderer.</summary>
+	void SelectEntity( GameObject go )
+	{
+		Selected = go;
+		_smr = go.IsValid() ? go.Components.Get<SkinnedModelRenderer>() : null;
+		StateHasChanged();
+	}
+
+	/// <summary>Move the selected entity along one or more axes.</summary>
+	void MoveSelected( float? x = null, float? y = null, float? z = null )
+	{
+		if ( !Selected.IsValid() ) return;
+		var p = Selected.WorldPosition;
+		Selected.WorldPosition = new Vector3( x ?? p.x, y ?? p.y, z ?? p.z );
+	}
+
+	// ── Animation helpers ─────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Switch to a named animation sequence.
+	///
+	/// <para>
+	/// Setting <c>UseAnimGraph = false</c> disconnects the model's built-in blend
+	/// tree so that <c>Sequence.Name</c> takes full control.  This is the simplest
+	/// way to play a single clip; for blended locomotion use the animgraph with
+	/// <c>SetAnimParameter()</c> calls instead.
+	/// </para>
+	/// </summary>
+	/// <param name="seqName">Clip name as it appears in the model's animation list.</param>
+	void PlaySequence( string seqName )
+	{
+		if ( !_smr.IsValid() ) return;
+		_smr.UseAnimGraph = false;
+		_smr.Sequence.Name = seqName;
+		_animSeq = seqName;
+		StateHasChanged();
+	}
+
+	/// <summary>
+	/// Toggle between the model's built-in animation graph and the manually
+	/// selected sequence.
+	///
+	/// <para>
+	/// When the animgraph is re-enabled it takes control of bone blending again.
+	/// When it is disabled the last chosen sequence (<see cref="_animSeq"/>) plays.
+	/// </para>
+	/// </summary>
+	void ToggleAnimGraph()
+	{
+		if ( !_smr.IsValid() ) return;
+		_smr.UseAnimGraph = !_smr.UseAnimGraph;
+		if ( !_smr.UseAnimGraph )
+			_smr.Sequence.Name = _animSeq;
+		StateHasChanged();
+	}
+
+	// ── Lifecycle ─────────────────────────────────────────────────────────────
+
+	/// <summary>Call StateHasChanged every frame to keep the FPS counter live.</summary>
+	protected override void OnUpdate() => StateHasChanged();
+
+	/// <summary>
+	/// Include the key pieces of state that should trigger a re-render when they
+	/// change.  Returning a different hash than last frame causes the Razor runtime
+	/// to call <c>BuildRenderTree</c> again.
+	/// </summary>
+	protected override int BuildHash() =>
+		System.HashCode.Combine(
+			Fps,
+			Selected,
+			Selected?.WorldPosition,
+			RecentLogs?.Count,
+			_smr.IsValid() ? _smr.UseAnimGraph : false,
+			_animSeq );
+}

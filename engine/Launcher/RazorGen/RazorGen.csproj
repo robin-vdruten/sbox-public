@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<NoWarn>1701;1702;1591;NETSDK1138</NoWarn>
+		<LangVersion>14</LangVersion>
+		<EnforceExtendedAnalyzerRules>false</EnforceExtendedAnalyzerRules>
+		<!--
+			Copy all referenced assemblies to the output directory so they are
+			available alongside RazorGen.dll when Roslyn loads it as an analyzer.
+		-->
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!--
+			The Roslyn hosting infrastructure supplies Microsoft.CodeAnalysis.*
+			assemblies to every analyzer at load time, so we mark them as
+			compile-only (no runtime copy needed).
+		-->
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0-2.final" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.12.0-beta1.25218.8">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<!--
+			Sandbox.Razor converts .razor source text to C#.
+			We reference it here; its DLL is copied to our output directory
+			(via CopyLocalLockFileAssemblies) so the assembly resolver in
+			RazorSourceGenerator can find and load it at analysis time.
+		-->
+		<ProjectReference Include="..\..\Sandbox.Razor\Sandbox.Razor.csproj" />
+	</ItemGroup>
+
+</Project>
