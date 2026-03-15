@@ -36,4 +36,34 @@
 		<ProjectReference Include="..\..\Sandbox.System\Sandbox.System.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<!--
+			Razor source generator: compiles every *.razor file listed in
+			<AdditionalFiles> to C# at dotnet-build time.
+
+			How it works:
+			  1. RazorGen.dll is loaded by Roslyn as an incremental analyzer.
+			  2. For each AdditionalFiles entry that ends with ".razor", the
+			     generator calls Sandbox.Razor.RazorProcessor.GenerateFromSource
+			     to produce the equivalent C#.
+			  3. The generated code is injected into the compilation, so the
+			     .razor file acts exactly like a hand-written partial class.
+
+			In a real sbox game addon the toolchain handles this automatically;
+			this project reference makes the same pipeline available when
+			building with plain "dotnet build".
+		-->
+		<ProjectReference Include="..\RazorGen\RazorGen.csproj"
+		                  OutputItemType="Analyzer"
+		                  ReferenceOutputAssembly="false" />
+
+		<!--
+			Declare each .razor UI file as an additional input to the Razor
+			source generator above.  The SCSS companion files are left as
+			<None> (content only) so they are not accidentally compiled.
+		-->
+		<AdditionalFiles Include="UI\*.razor" />
+		<None Include="UI\*.razor.scss" />
+	</ItemGroup>
+
 </Project>

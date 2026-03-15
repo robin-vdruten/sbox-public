@@ -1,0 +1,65 @@
+/* AxisSlider.razor.scss
+ *
+ * Styles for the AxisSlider Razor panel (UI/AxisSlider.razor).
+ * The element name used by PanelComponent is the lower-cased class name.
+ */
+
+AxisSlider {
+	flex-direction: row;
+	align-items: center;
+	height: 24px;
+	margin-bottom: 4px;
+
+	/* Axis letter badge (X / Y / Z). */
+	.axis-name {
+		width: 16px;
+		font-size: 13px;
+		font-weight: bold;
+		margin-right: 6px;
+		/* colour is applied inline by the parent (LabelColor.Hex) */
+	}
+
+	/* Drag track background. */
+	.track {
+		flex-grow: 1;
+		height: 8px;
+		background-color: rgba(31, 31, 46, 1);
+		border-radius: 4px;
+		position: relative;
+		overflow: visible;
+		cursor: pointer;
+
+		/* Coloured fill (width and background-color set inline). */
+		.fill {
+			position: absolute;
+			left: 0;
+			top: 0;
+			bottom: 0;
+			border-radius: 4px;
+			pointer-events: none;
+		}
+
+		/* Thumb needle (left position set inline). */
+		.thumb {
+			position: absolute;
+			width: 10px;
+			height: 18px;
+			background-color: rgba(255, 255, 255, 0.9);
+			border-radius: 3px;
+			top: -5px;
+			margin-left: -5px;
+			z-index: 1;
+			pointer-events: none;
+		}
+	}
+
+	/* Numeric value readout. */
+	.value-readout {
+		width: 52px;
+		font-size: 11px;
+		color: rgba(255, 255, 255, 0.85);
+		text-align: right;
+		margin-left: 6px;
+		pointer-events: none;
+	}
+}

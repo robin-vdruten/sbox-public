@@ -37,6 +37,7 @@
 !*.cfg
 !*.json
 !*.css
+!*.scss
 !.editorconfig
 !.yaml
 !.yml

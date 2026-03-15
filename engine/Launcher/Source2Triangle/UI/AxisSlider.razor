@@ -1,0 +1,121 @@
+@* AxisSlider.razor
+ *
+ * A single-axis drag slider Panel.
+ *
+ * Usage in a parent Razor component:
+ *
+ *   <AxisSlider Label="X"
+ *               LabelColor="@(new Color(1f, 0.35f, 0.35f))"
+ *               Min="-500" Max="500"
+ *               Value="@someFloat"
+ *               OnValueChanged="@(v => someFloat = v)" />
+ *
+ * The slider track responds to mouse-down / move / up events for dragging.
+ * A @ref to the inner track div is used to calculate the normalised position.
+ *@
+
+@using Sandbox
+@using Sandbox.UI
+@using System
+@inherits Panel
+@namespace Sandbox
+
+<root class="axis-slider">
+	@* Axis name badge (colour set inline so callers can tint each axis). *@
+	<label class="axis-name" style="color: @LabelColor.Hex">@Label</label>
+
+	@* Track – holds fill bar and thumb indicator. *@
+	<div class="track" @ref="Track">
+		@* Fill expands from left proportionally to the normalised value. *@
+		<div class="fill" style="width: @(Norm * 100f)%; background-color: @(LabelColor.WithAlpha( 0.75f ).Hex)"></div>
+		@* Thumb needle sits at the same percentage position. *@
+		<div class="thumb" style="left: @(Norm * 100f)%"></div>
+	</div>
+
+	@* Numeric readout on the right. *@
+	<label class="value-readout">@Value.ToString( "F1" )</label>
+</root>
+
+@code {
+	// ── Parameters (set by parent Razor component via HTML attributes) ──────
+
+	/// <summary>Single-character axis label, e.g. "X", "Y", "Z".</summary>
+	[Parameter] public string Label { get; set; } = "X";
+
+	/// <summary>Colour used for the axis label and the fill bar.</summary>
+	[Parameter] public Color LabelColor { get; set; } = Color.White;
+
+	/// <summary>Minimum value of the slider range.</summary>
+	[Parameter] public float Min { get; set; } = 0f;
+
+	/// <summary>Maximum value of the slider range.</summary>
+	[Parameter] public float Max { get; set; } = 1f;
+
+	/// <summary>Current value.  The parent component should update this on each <see cref="OnValueChanged"/> call.</summary>
+	[Parameter] public float Value { get; set; }
+
+	/// <summary>Fired whenever the user drags the slider to a new value.</summary>
+	[Parameter] public Action<float> OnValueChanged { get; set; }
+
+	// ── @ref to inner track div ──────────────────────────────────────────────
+
+	/// <summary>Reference to the track <c>&lt;div&gt;</c>, used for bounding-box calculations.</summary>
+	Panel Track;
+
+	// ── Internal drag state ───────────────────────────────────────────────────
+
+	bool _dragging;
+
+	/// <summary>Normalised position in [0, 1] derived from <see cref="Value"/>.</summary>
+	float Norm => MathX.LerpInverse( Value, Min, Max, true );
+
+	// ── Mouse event overrides (handle drag on the whole panel) ───────────────
+
+	/// <summary>Start a drag when the user presses anywhere on the slider.</summary>
+	protected override void OnMouseDown( MousePanelEvent e )
+	{
+		_dragging = true;
+		ApplyMousePosition();
+		e.StopPropagation();
+	}
+
+	/// <summary>Continue updating while the mouse moves (only during a drag).</summary>
+	protected override void OnMouseMove( MousePanelEvent e )
+	{
+		if ( !_dragging ) return;
+		ApplyMousePosition();
+		e.StopPropagation();
+	}
+
+	/// <summary>End the drag on mouse-up.</summary>
+	protected override void OnMouseUp( MousePanelEvent e )
+	{
+		_dragging = false;
+		e.StopPropagation();
+	}
+
+	// ── Helpers ───────────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Map the current mouse X position to a slider value, fire the callback,
+	/// and schedule a re-render.
+	/// </summary>
+	void ApplyMousePosition()
+	{
+		if ( Track?.Box == null ) return;
+
+		float trackWidth = Track.Box.Right - Track.Box.Left;
+		if ( trackWidth <= 0f ) return;
+
+		float n = ( ( Mouse.Position.x - Track.Box.Left ) / trackWidth ).Clamp( 0f, 1f );
+		Value = MathX.LerpTo( Min, Max, n );
+		OnValueChanged?.Invoke( Value );
+		StateHasChanged();
+	}
+
+	/// <summary>
+	/// Trigger a re-render when <see cref="Value"/>, <see cref="Min"/>, or
+	/// <see cref="Max"/> changes so the fill bar and thumb stay in sync.
+	/// </summary>
+	protected override int BuildHash() => System.HashCode.Combine( Value, Min, Max );
+}

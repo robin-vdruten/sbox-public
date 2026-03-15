@@ -4,21 +4,22 @@ using System.Collections.Generic;
 namespace Sandbox;
 
 /// <summary>
-/// Builds the demo game scene: a lit environment with a mesh model, physics, input
-/// and a HUD overlay.  Replace or extend this class to build your own game.
+/// Builds the demo game scene: a lit environment with a mesh model, physics, input,
+/// a Razor-style UI HUD with entity inspector, and an animated skinned model.
+/// Replace or extend this class to build your own game.
 /// </summary>
 internal static class GameScene
 {
 	static CameraComponent Camera;
 	static GameObject PhysicsBoxObject;
 
-	// Ring buffer of recent engine log messages (errors and warnings) for on-screen display.
+	// Ring buffer of recent engine log messages (errors and warnings) shown in the HUD.
 	static readonly Queue<LogEvent> _recentLogs = new();
 	const int MaxLogLines = 8;
 
 	internal static void Setup()
 	{
-		// Subscribe to engine log events so we can display errors and warnings on screen.
+		// Subscribe to engine log events so we can surface errors and warnings in the HUD.
 		Logging.OnMessage += OnEngineLog;
 
 		var scene = new Scene();
@@ -76,6 +77,28 @@ internal static class GameScene
 		// Slow auto-rotation so the model is clearly visible
 		modelGo.AddComponent<ModelRotator>();
 
+		// ── Animated skinned model (citizen) ─────────────────────────────────
+		// SkinnedModelRenderer drives bone animations.  The model's built-in
+		// animation graph plays automatically; swap UseAnimGraph = false and set
+		// Sequence.Name to play a specific clip by name instead.
+		//
+		// Equivalent in a .razor PanelComponent or in scene setup code:
+		//   var smr = citizenGo.AddComponent<SkinnedModelRenderer>();
+		//   smr.Model = Model.Load("models/citizen_human/citizen_human_male.vmdl");
+		//   smr.UseAnimGraph = true;   // let the built-in animgraph run
+		//   // – or –
+		//   smr.UseAnimGraph = false;
+		//   smr.Sequence.Name = "idle";  // play a named sequence directly
+		var citizenGo = scene.CreateObject( true );
+		citizenGo.Name = "Animated Citizen";
+		citizenGo.WorldPosition = new Vector3( -120f, 0f, 0f );
+		citizenGo.WorldRotation = new Angles( 0f, 90f, 0f );
+		var smr = citizenGo.AddComponent<SkinnedModelRenderer>();
+		smr.Model = Model.Load( "models/citizen_human/citizen_human_male.vmdl" );
+		// The citizen model ships with an animation graph; enable it so the idle
+		// animation plays automatically via the built-in animgraph.
+		smr.UseAnimGraph = true;
+
 		// ── Physics box (dynamic – falls and bounces on the floor) ────────────
 		PhysicsBoxObject = scene.CreateObject( true );
 		PhysicsBoxObject.Name = "Physics Box";
@@ -89,11 +112,31 @@ internal static class GameScene
 		// Reset spawner component handles the "R" key
 		PhysicsBoxObject.AddComponent<PhysicsBoxReset>();
 
-		// ── HUD overlay ───────────────────────────────────────────────────────
-		Camera.SceneCamera.OnRenderOverlay = DrawHud;
+		// ── Razor-style HUD & entity inspector ───────────────────────────────
+		// ScreenPanel acts as the UI root (renders all child PanelComponents to
+		// the screen).  GameHudComponent is the PanelComponent that builds the
+		// FPS counter, control hints, log console, and entity inspector.
+		//
+		// In a sbox game addon you would simply add a .razor file that
+		// @inherits PanelComponent and the toolchain compiles it for you.
+		var uiGo = scene.CreateObject( true );
+		uiGo.Name = "HUD";
+		uiGo.AddComponent<ScreenPanel>();
+		var hud = uiGo.AddComponent<GameHudComponent>();
+
+		// Pass shared state to the HUD so it can populate the entity list and
+		// show log messages without needing a static reference to GameScene.
+		hud.TrackedEntities = new (string, GameObject)[]
+		{
+			("Scene Model",       modelGo),
+			("Animated Citizen",  citizenGo),
+			("Physics Box",       PhysicsBoxObject),
+			("Floor",             floorGo),
+		};
+		hud.RecentLogs = _recentLogs;
 	}
 
-	// ── HUD drawn every frame via the camera overlay callback ─────────────────
+	// ── Engine log subscription ───────────────────────────────────────────────
 
 	static void OnEngineLog( LogEvent e )
 	{
@@ -104,59 +147,5 @@ internal static class GameScene
 		_recentLogs.Enqueue( e );
 		while ( _recentLogs.Count > MaxLogLines )
 			_recentLogs.Dequeue();
-	}
-
-	static void DrawHud()
-	{
-		float fps = Time.Delta > 0f ? 1f / Time.Delta : 0f;
-
-		// FPS counter – top-left corner
-		Graphics.DrawText(
-			new Rect( 10, 10, 400, 28 ),
-			$"FPS: {fps:F0}",
-			Color.White,
-			fontSize: 20
-		);
-
-		// Controls help text
-		Graphics.DrawText(
-			new Rect( 10, 42, 500, 20 ),
-			"Hold RMB + drag to orbit  |  Scroll wheel to zoom",
-			new Color( 0.85f, 0.85f, 0.85f ),
-			fontSize: 14
-		);
-		Graphics.DrawText(
-			new Rect( 10, 62, 500, 20 ),
-			"Press  R  to drop a new physics box  |  Esc  to quit",
-			new Color( 0.85f, 0.85f, 0.85f ),
-			fontSize: 14
-		);
-
-		// On-screen console: display recent engine warnings and errors at the bottom.
-		if ( _recentLogs.Count > 0 )
-		{
-			float screenHeight = Screen.Height;
-			float lineHeight = 16f;
-			float y = screenHeight - ( _recentLogs.Count * lineHeight ) - 10f;
-
-			foreach ( var entry in _recentLogs )
-			{
-				var color = entry.Level == LogLevel.Error
-					? new Color( 1f, 0.3f, 0.3f )
-					: new Color( 1f, 0.85f, 0.2f );
-
-				var prefix = entry.Level == LogLevel.Error ? "[ERROR]" : "[WARN]";
-				var logger = string.IsNullOrEmpty( entry.Logger ) ? string.Empty : $"[{entry.Logger}] ";
-
-				Graphics.DrawText(
-					new Rect( 10, y, Screen.Width - 20f, lineHeight ),
-					$"{prefix} {logger}{entry.Message}",
-					color,
-					fontSize: 12
-				);
-
-				y += lineHeight;
-			}
-		}
 	}
 }

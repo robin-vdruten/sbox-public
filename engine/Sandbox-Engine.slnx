@@ -7,6 +7,7 @@
   <Folder Name="/Engine/" />
   <Folder Name="/Engine/Dev/">
     <Project Path="Definitions/Definitions.csproj" />
+    <Project Path="Launcher/RazorGen/RazorGen.csproj" />
     <Project Path="Sandbox.CodeUpgrader.Test/Sandbox.CodeUpgrader.Test.csproj" />
     <Project Path="Sandbox.CodeUpgrader/Sandbox.CodeUpgrader.csproj" />
     <Project Path="Sandbox.Generator/Sandbox.Generator.csproj" />
