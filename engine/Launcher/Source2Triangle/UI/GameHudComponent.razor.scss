@@ -1,0 +1,172 @@
+/* GameHudComponent.razor.scss
+ *
+ * Styles for the GameHudComponent Razor PanelComponent.
+ * The element name in sbox's CSS system is the lower-cased class name.
+ */
+
+GameHudComponent {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+
+	/* ── Top-left HUD column ───────────────────────────────────────────────── */
+
+	.hud-left {
+		position: absolute;
+		left: 12px;
+		top: 12px;
+		flex-direction: column;
+		pointer-events: none;
+
+		.fps {
+			color: rgba(255, 255, 255, 1);
+			font-size: 22px;
+			font-weight: 700;
+			margin-bottom: 4px;
+		}
+
+		.hint {
+			color: rgba(200, 200, 200, 0.85);
+			font-size: 14px;
+			margin-top: 2px;
+		}
+	}
+
+	/* ── Bottom-left log console ───────────────────────────────────────────── */
+
+	.log-console {
+		position: absolute;
+		left: 12px;
+		bottom: 10px;
+		width: 700px;
+		flex-direction: column;
+		pointer-events: none;
+
+		label {
+			font-size: 12px;
+			margin-bottom: 2px;
+		}
+
+		.log-error {
+			color: rgba(255, 77, 77, 1);
+		}
+
+		.log-warn {
+			color: rgba(255, 222, 56, 1);
+		}
+	}
+
+	/* ── Right-side entity inspector ───────────────────────────────────────── */
+
+	.inspector {
+		position: absolute;
+		right: 12px;
+		top: 12px;
+		width: 290px;
+		background-color: rgba(13, 13, 26, 0.88);
+		border-radius: 8px;
+		padding: 12px 14px;
+		flex-direction: column;
+		pointer-events: all;
+
+		.inspector-title {
+			color: rgba(255, 255, 255, 1);
+			font-size: 16px;
+			font-weight: 700;
+			margin-bottom: 10px;
+		}
+
+		/* Entity selection buttons. */
+		.entity-btn {
+			padding: 5px 8px;
+			margin-bottom: 3px;
+			border-radius: 4px;
+			background-color: rgba(46, 46, 71, 1);
+			cursor: pointer;
+
+			label {
+				color: rgba(255, 255, 255, 1);
+				font-size: 13px;
+				pointer-events: none;
+			}
+
+			&:hover {
+				background-color: rgba(60, 60, 95, 1);
+			}
+
+			&.active {
+				background-color: rgba(64, 109, 179, 1);
+			}
+		}
+
+		/* Selected entity name. */
+		.selected-name {
+			color: rgba(235, 235, 235, 1);
+			font-size: 14px;
+			font-weight: 700;
+			margin-top: 6px;
+			margin-bottom: 8px;
+		}
+
+		/* Horizontal rule. */
+		.divider {
+			height: 1px;
+			background-color: rgba(255, 255, 255, 0.12);
+			margin-bottom: 8px;
+		}
+
+		/* Section headings like "Position", "Animation". */
+		.section-heading {
+			color: rgba(174, 174, 210, 1);
+			font-size: 12px;
+			font-weight: 700;
+			margin-bottom: 6px;
+		}
+
+		/* ── Animation controls ──────────────────────────────────────────────── */
+
+		.anim-divider {
+			margin-top: 8px;
+		}
+
+		.anim-controls {
+			flex-direction: row;
+			flex-wrap: wrap;
+			gap: 4px;
+			margin-bottom: 4px;
+		}
+
+		.anim-controls-secondary {
+			margin-bottom: 4px;
+		}
+
+		/* Individual animation-clip buttons. */
+		.anim-btn {
+			padding: 4px 10px;
+			border-radius: 4px;
+			background-color: rgba(50, 50, 75, 1);
+			color: rgba(210, 210, 210, 1);
+			font-size: 12px;
+			cursor: pointer;
+
+			&:hover {
+				background-color: rgba(65, 65, 100, 1);
+			}
+
+			&.active {
+				background-color: rgba(64, 109, 179, 1);
+				color: rgba(255, 255, 255, 1);
+			}
+		}
+
+		/* Small caption below the animation controls. */
+		.hint-small {
+			color: rgba(160, 160, 180, 1);
+			font-size: 11px;
+			margin-top: 2px;
+		}
+	}
+}
